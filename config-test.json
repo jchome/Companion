@@ -1,0 +1,34 @@
+{
+    "application": "Visual Studio Code",
+    "window": "*Visual Studio Code",
+    "version": 1.0,
+    "start": "Main",
+    "modules": [
+        {
+            "name": "Main",
+            "help": "index.html",
+            "actions": [
+                {
+                    "corners": [0,0,100,100],
+                    "name": "go_to_file",
+                    "target": "Files"
+                },{
+                    "corners": [0,100,100,100],
+                    "name": "go_to_search",
+                    "target": "Search"
+                }
+            ]
+        },
+        {
+            "name": "Files",
+            "help": "files.html",
+            "actions": []
+        },
+        {
+            "name": "Search",
+            "help": "search.html",
+            "actions": []
+        }
+    ]
+
+}
