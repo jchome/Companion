@@ -7,6 +7,9 @@ import re
 import configparser
 import os
 
+from tkinter import *
+import tkinter.font as font
+
 class Companion:
 
     def __init__(self, config_ini):
@@ -15,14 +18,81 @@ class Companion:
             self.conf = json.load(f)
 
         self.current_module = self._get_module(self.conf["start"])
+        self.listener = None
+        self.window = None
 
-        # Collect events until released
-        with mouse.Listener(
+    def start(self):
+        ## Collect events until released
+        self.listener = mouse.Listener(
                 on_move=self.on_move,
                 on_click=self.on_click,
-                on_scroll=self.on_scroll) as listener:
-            listener.join()
+                on_scroll=self.on_scroll)
+        self.listener.start()
+        ## Open the GUI
+        self._open_window()
+        
+    def _open_window(self):
+        self.window = Tk()
+
+        self.window.title(self.config_companion['UI']['title'])
+        self.window.geometry(self.config_companion['UI']['geometry'])
+        self.window.resizable(False, False)
+        ## Does not work
+        #self.window.attributes('-alpha',0.5)
+
+        if self.config_companion.has_option('UI','background'):
+            option_background = self.config_companion['UI']['background'].strip()
+            self.window.configure(background=option_background)
+
+        if self.config_companion.has_option('UI','button_image') \
+                and len(self.config_companion['UI']['button_image'].strip()) > 0:
+            button_image = PhotoImage(file=self.config_companion['UI']['button_image'].strip())
+            button = Button(self.window, image=button_image, command=self._open_help, borderwidth=0)
+        else:
+
+            ## Default button text
+            button_title = "Help"
+            if self.config_companion.has_option('UI','button_title'):
+                button_title = self.config_companion['UI']['button_title'].strip()
+
+            ## Button's font
+            font_description = 'Arial 12'
+            if self.config_companion.has_option('UI','button_font'):
+                font_description = self.config_companion['UI']['button_font'].strip()
+            
+            fg_color = '#000000'
+            if self.config_companion.has_option('UI','button_foreground'):
+                fg_color = self.config_companion['UI']['button_foreground'].strip()
+
+            bg_color = '#a0a0a0'
+            if self.config_companion.has_option('UI','button_background'):
+                bg_color = self.config_companion['UI']['button_background'].strip()
+
+            button = Button(self.window, text=button_title, command=self._open_help, 
+                            fg=fg_color,
+                            bg=bg_color,
+                            font=(font_description))
+        button.pack(padx = 10, pady = 50)
+
+        ## Always on top
+        if self.config_companion.has_option('UI','always_on_top') and \
+                self.config_companion['UI']['always_on_top'].strip() == 'True':
+            self.window.attributes('-topmost', 1)
+
+        ## Icon
+        if self.config_companion.has_option('UI','icon_file'):
+            self.window.iconbitmap(self.config_companion['UI']['icon_file'])
+
+        if self.config_companion.has_option('UI','no_decoration') and \
+                self.config_companion['UI']['no_decoration'].strip() == 'True':
+            self.window.overrideredirect(True)
+
+        ## Does not work
+        #self.window.protocol("WM_DELETE_WINDOW", self._on_closing)
+        self.window.mainloop()
         ## -- Not reachable code --
+
+
 
     def on_move(self, x, y):
         pass
@@ -76,9 +146,9 @@ class Companion:
             ## Move to the target module 
             print('Moved to module <<{0}>>'.format(next_module))
             self.current_module = next_module
-            self.open_help()
+            self._open_help()
 
-    def open_help(self):
+    def _open_help(self):
         help_file = self.current_module['help']
         exec_for_help = self.config_companion['CONFIG']['exec_for_help'].format(help_file)
 
@@ -109,4 +179,5 @@ class Companion:
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('companion.ini')
-    Companion(config)
+    comp = Companion(config)
+    comp.start()
